@@ -34,5 +34,14 @@ build/
 
 .env
 .env.*
+!.env.example
 application-local.properties
 application-local.yml
+
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db

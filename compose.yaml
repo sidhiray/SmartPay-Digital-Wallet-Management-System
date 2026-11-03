@@ -1,0 +1,43 @@
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: smartpay-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smartpay_db
+      POSTGRES_USER: smartpay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartpay -d smartpay_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smartpay-network
+
+  app:
+    image: smartpay-wallet:1.0
+    container_name: smartpay-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartpay_db
+      SPRING_DATASOURCE_USERNAME: smartpay
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+    networks:
+      - smartpay-network
+
+volumes:
+  postgres_data:
+
+networks:
+  smartpay-network:
+    driver: bridge

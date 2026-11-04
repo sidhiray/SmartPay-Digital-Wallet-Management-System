@@ -1,0 +1,219 @@
+{
+  "info": {
+    "_postman_id": "8ddbb49b-8a5c-4a74-9238-1f59149a9d32",
+    "name": "SmartPay Wallet System API",
+    "description": "Postman collection for the SmartPay Spring Boot wallet API. Set the baseUrl collection variable before running. Login requests automatically save the returned JWT accessToken into the accessToken collection variable. Do not export real passwords or tokens.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('HTTP response is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.within(200, 299);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "transfer-docker-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Sergio Ramos\",\n  \"email\": \"sr@gmail.com\",\n  \"mobile\": \"9812356687\",\n  \"password\": \"change-this-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "description": "Registers a user. Replace the sample email, mobile number, and password with test values that are not used in production."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User (saves JWT automatically)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns a successful response', function () {",
+                  "    pm.expect(pm.response.code).to.be.within(200, 299);",
+                  "});",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "    const responseBody = pm.response.json();",
+                  "    if (responseBody.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', responseBody.accessToken);",
+                  "        console.log('JWT access token saved to the collection variable.');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sr@gmail.com\",\n  \"password\": \"change-this-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "description": "Log in with a registered user. On a successful response, the accessToken is saved automatically and used by protected requests in this collection."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/users/me",
+            "description": "Returns the authenticated username/email. Uses the collection-level Bearer token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get Wallet Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/wallet/balance",
+            "description": "Returns the authenticated user's wallet balance."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Money",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/wallet/add-money",
+            "description": "Adds test funds through the application's add-money endpoint. This sample is for local/demo testing only; it is not a verified payment-gateway deposit flow."
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Money",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "description": "Use a new unique key for each new transfer. Reuse the same key only when retrying the same logical transfer."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverEmail\": \"cr7@gmail.com\",\n  \"amount\": 100.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/wallet/transfer",
+            "description": "Transfers money from the authenticated sender to the receiver identified by email. Change idempotencyKey to a fresh unique value for every new transfer."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transaction History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/wallet/transactions?page=0&size=10",
+            "description": "Returns the authenticated user's paginated transaction history. The controller defaults to page size 10 and createdAt descending."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

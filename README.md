@@ -118,6 +118,190 @@ Authorization: Bearer <accessToken>
 For money transfers, send the receiver's registered email and transfer amount in the request body. Include the idempotency header required by the transfer API when making a transfer request; use a unique key for each distinct transfer and reuse the same key only when retrying that same logical request.
 Add an API endpoint table here using the exact @RequestMapping and @PostMapping / @GetMapping paths from the current controllers before publishing the README. Endpoint paths are intentionally not guessed in this document.
 
+## API Endpoints
+
+### Authentication APIs
+
+Base URL: `http://localhost:8081`
+
+#### 1. User Registration
+
+```http
+POST /api/v1/auth/register
+```
+
+Registers a new user and creates their wallet.
+
+**Request Body:**
+
+```json
+{
+  "fullName": "Sergio Ramos",
+  "email": "sr@gmail.com",
+  "mobile": "9812356687",
+  "password": "your-password"
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "userId": 1,
+  "fullName": "Sergio Ramos",
+  "email": "sr@gmail.com",
+  "mobile": "9812356687",
+  "role": "USER",
+  "kycStatus": "PENDING",
+  "message": "User registered successfully"
+}
+```
+
+#### 2. User Login
+
+```http
+POST /api/v1/auth/login
+```
+
+Authenticates the user and generates a JWT access token.
+
+**Request Body:**
+
+```json
+{
+  "email": "sr@gmail.com",
+  "password": "your-password"
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "userId": 1,
+  "fullName": "Sergio Ramos",
+  "email": "sr@gmail.com",
+  "role": "USER",
+  "accessToken": "<JWT_ACCESS_TOKEN>",
+  "tokenType": "Bearer",
+  "expiresIn": 3600000
+}
+```
+
+The generated access token is used to authenticate protected wallet and user APIs.
+
+### Wallet APIs
+
+Base URL: `http://localhost:8081`
+
+All wallet APIs require JWT authentication.
+
+**Authorization Header:**
+```http
+Authorization: Bearer <accessToken>
+```
+
+| Method | Endpoint | Description | Authentication |
+|---|---|---|---|
+| GET | `/api/v1/wallet/balance` | Retrieve current user's wallet balance | Required |
+| POST | `/api/v1/wallet/add-money` | Add money to the wallet | Required |
+| GET | `/api/v1/wallet/transactions` | Retrieve paginated transaction history | Required |
+| POST | `/api/v1/wallet/transfer` | Transfer money to another user | Required |
+
+#### 1. Get Wallet Balance
+
+```http
+GET /api/v1/wallet/balance
+```
+
+Returns the authenticated user's wallet details.
+
+**Example Response:**
+```json
+{
+  "walletId": 1,
+  "balance": 400.00,
+  "currency": "INR",
+  "isActive": true
+}
+```
+
+#### 2. Add Money
+
+```http
+POST /api/v1/wallet/add-money
+```
+
+**Request Body:**
+```json
+{
+  "amount": 500.00
+}
+```
+
+Adds the specified amount to the authenticated user's wallet.
+
+#### 3. Get Transaction History
+
+```http
+GET /api/v1/wallet/transactions
+```
+
+Returns the authenticated user's transaction history.
+
+**Pagination defaults:**
+- Page size: 10
+- Default sorting: `createdAt` descending
+
+#### 4. Transfer Money
+
+```http
+POST /api/v1/wallet/transfer
+```
+
+**Required Header:**
+```http
+Idempotency-Key: transfer-unique-001
+```
+
+**Request Body:**
+```json
+{
+  "receiverEmail": "cr7@gmail.com",
+  "amount": 100.00
+}
+```
+
+### User APIs
+
+Base URL: `http://localhost:8081`
+
+All user APIs require JWT authentication.
+
+**Authorization Header:**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+#### Get Current User
+
+```http
+GET /api/v1/users/me
+```
+
+Returns the currently authenticated user's email/username.
+
+**Example Response:**
+
+```text
+Authenticated user: sr@gmail.com
+```
+
+Transfers money from the authenticated user's wallet to the recipient's wallet.
+
+The idempotency key helps prevent duplicate processing when the same transfer request is retried.
+
 Security Notes
 - Keep .env out of version control.
 - Never commit database passwords, JWT signing secrets, access tokens, or real user data.

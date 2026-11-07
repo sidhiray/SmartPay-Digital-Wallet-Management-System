@@ -302,6 +302,41 @@ Transfers money from the authenticated user's wallet to the recipient's wallet.
 
 The idempotency key helps prevent duplicate processing when the same transfer request is retried.
 
+## Interactive API Documentation (Swagger)
+
+SmartPay provides interactive API documentation using OpenAPI 3 and Swagger UI.
+
+### Access Swagger UI
+
+Start the application using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+Open Swagger UI:
+
+```text
+http://localhost:8081/swagger-ui/index.html
+```
+
+OpenAPI specification:
+
+```text
+http://localhost:8081/v3/api-docs
+```
+
+### Authentication
+
+Protected APIs use JWT Bearer Authentication.
+
+1. Execute the Login API to obtain an access token.
+2. Click the **Authorize** button in Swagger UI.
+3. Enter your JWT access token.
+4. Execute protected APIs such as wallet balance, money transfer, and transaction history.
+
+Swagger UI allows developers to explore API endpoints, view request/response schemas, and execute API requests directly from the browser.
+
 Security Notes
 - Keep .env out of version control.
 - Never commit database passwords, JWT signing secrets, access tokens, or real user data.
